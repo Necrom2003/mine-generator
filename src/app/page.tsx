@@ -1,20 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import levelsData from "./levels.json";
 import styles from "./page.module.scss";
-import { Gem, Pickaxe, Users, Zap, AlertCircle } from "lucide-react";
+import { Gem, Pickaxe, Users, Zap, AlertCircle, RefreshCw } from "lucide-react";
 
 type Level = { mine: number; level: number; time: number | null; emeralds: number };
 type Assignment = { mine: number; level: number; emeralds: number; time: number | null; rate: number };
 
 const levels = levelsData as Level[];
 
+// Константы для ключей localStorage
+const LS_MAX_LEVEL = "mine_maxLevel";
+const LS_HEROES = "mine_heroes";
+const LS_CYCLES = "mine_cycles";
+
 export default function Home() {
-  const [maxLevel, setMaxLevel] = useState(4780);
-  const [heroes, setHeroes] = useState(40);
+  // Инициализация состояний с использованием функции для чтения из localStorage
+  const [maxLevel, setMaxLevel] = useState(() => {
+    if (typeof window !== "undefined") {
+      return parseInt(localStorage.getItem(LS_MAX_LEVEL) || "4780", 10);
+    }
+    return 4780;
+  });
+  const [heroes, setHeroes] = useState(() => {
+    if (typeof window !== "undefined") {
+      return parseInt(localStorage.getItem(LS_HEROES) || "40", 10);
+    }
+    return 40;
+  });
+  const [cycles, setCycles] = useState(() => {
+    if (typeof window !== "undefined") {
+      return parseInt(localStorage.getItem(LS_CYCLES) || "5", 10);
+    }
+    return 5;
+  });
+
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [remaining, setRemaining] = useState(0);
+
+  // useEffect для сохранения состояний при их изменении
+  useEffect(() => {
+    localStorage.setItem(LS_MAX_LEVEL, maxLevel.toString());
+  }, [maxLevel]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_HEROES, heroes.toString());
+  }, [heroes]);
+
+  useEffect(() => {
+    localStorage.setItem(LS_CYCLES, cycles.toString());
+  }, [cycles]);
+
 
   const calculate = () => {
     if (heroes < 4) {
@@ -25,6 +62,7 @@ export default function Home() {
 
     const available = levels
       .filter(m => m.level <= maxLevel && (m.time === null || m.time >= 60))
+      // Расчет ставки: изумруды / время (мин) * 60 (мин/час)
       .map(m => ({ ...m, rate: m.time ? (m.emeralds / m.time) * 60 : 0 }))
       .sort((a, b) => b.rate - a.rate);
 
@@ -41,10 +79,12 @@ export default function Home() {
     setRemaining(left);
   };
 
+  // Изменение расчета: добавлено умножение на количество циклов
   const totalEmeralds = assignments.reduce((sum, a) => {
+    // mult: 3x для 60 мин, 1x для 192 мин, 0 для остальных
     const mult = a.time === 60 ? 3 : a.time === 192 ? 1 : 0;
     return sum + a.emeralds * mult;
-  }, 0);
+  }, 0) * cycles; // Умножаем итоговую сумму на количество циклов
 
   return (
     <div className={styles.page}>
@@ -62,8 +102,9 @@ export default function Home() {
               <input
                 type="number"
                 value={maxLevel}
-                onChange={e => setMaxLevel(+e.target.value || 0)}
+                onChange={e => setMaxLevel(Math.max(0, +e.target.value || 0))}
                 placeholder="4780"
+                min="0"
               />
             </div>
 
@@ -72,8 +113,21 @@ export default function Home() {
               <input
                 type="number"
                 value={heroes}
-                onChange={e => setHeroes(+e.target.value || 0)}
+                onChange={e => setHeroes(Math.max(0, +e.target.value || 0))}
                 placeholder="40"
+                min="0"
+              />
+            </div>
+
+            {/* Новый ввод для количества циклов */}
+            <div className={styles.inputRow}>
+              <label><RefreshCw className={styles.icon} /> Циклы (×)</label>
+              <input
+                type="number"
+                value={cycles}
+                onChange={e => setCycles(Math.max(1, +e.target.value || 1))}
+                placeholder="3"
+                min="1"
               />
             </div>
 
@@ -95,7 +149,7 @@ export default function Home() {
           {assignments.length > 0 && (
             <>
               <div className={styles.totalCard}>
-                <div className={styles.totalLabel}>Всего за цикл</div>
+                <div className={styles.totalLabel}>Всего за **{cycles}** цикл(а/ов)</div>
                 <div className={styles.totalValue}>
                   {totalEmeralds.toLocaleString()}
                   <Gem className={styles.totalGem} />
@@ -105,6 +159,7 @@ export default function Home() {
               <div className={styles.minesList}>
                 {assignments.map(a => {
                   const mult = a.time === 60 ? 3 : a.time === 192 ? 1 : 0;
+                  // Награда за ОДИН цикл
                   const reward = a.emeralds * mult;
 
                   return (
@@ -115,7 +170,9 @@ export default function Home() {
                       </div>
 
                       <div className={styles.mineStats}>
+                        {/* Ставка/час не меняется от числа циклов */}
                         <span className={styles.rate}>{a.rate.toFixed(1)}/ч</span>
+                        {/* Показываем награду за один цикл */}
                         <span className={styles.reward}>
                           {reward > 0 ? reward.toLocaleString() : a.emeralds}
                         </span>
@@ -134,7 +191,8 @@ export default function Home() {
             </>
           )}
 
-          {assignments.length === 0 && heroes >= 4 && (
+          {/* Добавлена проверка на 0 циклов */}
+          {assignments.length === 0 && heroes >= 4 && cycles >= 1 && (
             <div className={styles.empty}>Нажмите «Рассчитать»</div>
           )}
         </div>
