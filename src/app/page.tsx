@@ -165,8 +165,8 @@ export default function Home() {
                   return (
                     <div key={a.mine} className={styles.mineRow}>
                       <div className={styles.mineInfo}>
-                        <span className={styles.mineNum}>Шахта {a.mine}</span>
-                        <span className={styles.level}>ур. {a.level}</span>
+                        <span className={styles.mineNum}>{a.level}</span>
+                        <span className={styles.level}>Шахта {a.mine}</span>
                       </div>
 
                       <div className={styles.mineStats}>
