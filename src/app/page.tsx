@@ -1,182 +1,144 @@
 "use client";
-import Image from "next/image";
-import styles from "./page.module.css";
+
 import { useState } from "react";
 import levelsData from "./levels.json";
+import styles from "./page.module.scss";
+import { Gem, Pickaxe, Users, Zap, AlertCircle } from "lucide-react";
 
-// Типы данных
-type Level = {
-  mine: number;      // номер шахты
-  level: number;     // требуемый уровень шахты
-  time: number | null; // время в минутах (null — мгновенно)
-  emeralds: number;  // количество изумрудов
-};
-
-type Assignment = {
-  mine: number;
-  level: number;
-  emeralds: number;
-  time: number | null;
-  rate: number;      // изумрудов в час
-  assigned: number;  // сколько героев назначено
-};
-
-type AppState = {
-  maxLevel: number;        // максимальный доступный уровень шахты
-  heroesCount: number;     // общее количество героев
-  assignments: Assignment[];
-  remainingHeroes: number; // оставшиеся нераспределённые герои
-};
+type Level = { mine: number; level: number; time: number | null; emeralds: number };
+type Assignment = { mine: number; level: number; emeralds: number; time: number | null; rate: number };
 
 const levels = levelsData as Level[];
 
 export default function Home() {
-  const [state, setState] = useState<AppState>({
-    maxLevel: 4780,
-    heroesCount: 40,
-    assignments: [],
-    remainingHeroes: 0,
-  });
+  const [maxLevel, setMaxLevel] = useState(4780);
+  const [heroes, setHeroes] = useState(40);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [remaining, setRemaining] = useState(0);
 
-  // Обработка ввода чисел
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    const name = e.target.name;
-
-    if (isNaN(value) || value <= 0) return;
-
-    setState((prev) =>
-      name === "maxLevel"
-        ? { ...prev, maxLevel: value }
-        : { ...prev, heroesCount: value }
-    );
-  };
-
-  // Основной расчёт оптимального распределения героев
-  const handleCalculate = () => {
-    const heroes = state.heroesCount;
-    const maxMineLevel = state.maxLevel;
-
-    if (heroes <= 0) {
-      setState((prev) => ({ ...prev, assignments: [], remainingHeroes: 0 }));
+  const calculate = () => {
+    if (heroes < 4) {
+      setAssignments([]);
+      setRemaining(heroes);
       return;
     }
 
-    // Доступные шахты: уровень ≤ максимальному и время ≥ 60 минут (или мгновенные не берём)
-    const accessible = levels.filter(
-      (m) => m.level <= maxMineLevel && (m.time === null || m.time >= 60)
-    );
+    const available = levels
+      .filter(m => m.level <= maxLevel && (m.time === null || m.time >= 60))
+      .map(m => ({ ...m, rate: m.time ? (m.emeralds / m.time) * 60 : 0 }))
+      .sort((a, b) => b.rate - a.rate);
 
-    // Считаем эффективность (изумрудов в час)
-    const accessibleWithRate: (Level & { rate: number })[] = accessible.map((m) => {
-      const time = typeof m.time === "number" && m.time > 0 ? m.time : Infinity;
-      const rate = time !== Infinity ? (m.emeralds / time) * 60 : 0; // переводим в час
-      return { ...m, rate };
-    });
+    const result: Assignment[] = [];
+    let left = heroes;
 
-    // Сортируем по убыванию эффективности
-    accessibleWithRate.sort((a, b) => b.rate - a.rate);
-
-    const assignments: Assignment[] = [];
-    let remaining = heroes;
-
-    // Назначаем только полными группами по 4 героя
-    for (const m of accessibleWithRate) {
-      if (remaining < 4) break;
-
-      const assign = 4;
-      assignments.push({
-        mine: m.mine,
-        level: m.level,
-        emeralds: m.emeralds,
-        time: m.time,
-        rate: m.rate,
-        assigned: assign,
-      });
-      remaining -= assign;
+    for (const m of available) {
+      if (left < 4) break;
+      result.push(m);
+      left -= 4;
     }
 
-    setState((prev) => ({ ...prev, assignments, remainingHeroes: remaining }));
+    setAssignments(result);
+    setRemaining(left);
   };
 
+  const totalEmeralds = assignments.reduce((sum, a) => {
+    const mult = a.time === 60 ? 3 : a.time === 192 ? 1 : 0;
+    return sum + a.emeralds * mult;
+  }, 0);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.inputGroup}>
-        <label htmlFor="maxLevel">Максимальный уровень шахты</label>
-        <input
-          type="text"
-          id="maxLevel"
-          value={state.maxLevel}
-          name="maxLevel"
-          onChange={handleChange}
-          placeholder="например: 4780"
-        />
-      </div>
+    <div className={styles.page}>
+      <div className={styles.grid}>
+        {/* Левая колонка — ввод */}
+        <div className={styles.leftPanel}>
+          <h1 className={styles.title}>
+            <Gem className={styles.gem} />
+            Калькулятор шахт
+          </h1>
 
-      <div className={styles.inputGroup}>
-        <label htmlFor="heroesCount">Количество героев</label>
-        <input
-          type="text"
-          id="heroesCount"
-          value={state.heroesCount}
-          name="heroesCount"
-          onChange={handleChange}
-          placeholder="например: 40"
-        />
-      </div>
+          <div className={styles.inputCard}>
+            <div className={styles.inputRow}>
+              <label><Pickaxe className={styles.icon} /> Макс. уровень</label>
+              <input
+                type="number"
+                value={maxLevel}
+                onChange={e => setMaxLevel(+e.target.value || 0)}
+                placeholder="4780"
+              />
+            </div>
 
-      <button onClick={handleCalculate} className={styles.calculateBtn}>
-        Рассчитать
-      </button>
+            <div className={styles.inputRow}>
+              <label><Users className={styles.icon} /> Герои</label>
+              <input
+                type="number"
+                value={heroes}
+                onChange={e => setHeroes(+e.target.value || 0)}
+                placeholder="40"
+              />
+            </div>
 
-      {state.assignments.length > 0 && (
-        <div className={styles.result}>
-          <h3>Рекомендуемые назначения</h3>
-          <ul>
-            {state.assignments.map((a) => {
-              // Множитель бонуса: 60 мин = x3, 192 мин = x1, остальное — без бонуса
-              let multiplier = 0;
-              let bonusText = "";
-              if (a.time === 60) {
-                multiplier = 3;
-                bonusText = " (x3 бонус)";
-              } else if (a.time === 192) {
-                multiplier = 1;
-                bonusText = " (x1)";
-              }
-
-              const totalEmeralds = a.emeralds * multiplier;
-
-              return (
-                <li key={a.mine}>
-                  Шахта {a.mine} (ур. {a.level}): {a.assigned} геро
-                  {a.assigned === 1 ? "й" : "ев"} —{" "}
-                  <strong>{a.rate.toFixed(2)} изумрудов/час</strong>
-                  {multiplier > 0 && (
-                    <>
-                      {" "}— <strong>{totalEmeralds} изумрудов</strong>
-                      {bonusText}
-                    </>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className={styles.summary}>
-            <p>Осталось нераспределённых героев: <strong>{state.remainingHeroes}</strong></p>
-            <p>
-              Всего изумрудов за полный цикл:{" "}
-              <strong style={{ color: "#2ecc71", fontSize: "1.2em" }}>
-                {state.assignments.reduce((sum, a) => {
-                  const multiplier = a.time === 60 ? 3 : a.time === 192 ? 1 : 0;
-                  return sum + a.emeralds * multiplier;
-                }, 0)}
-              </strong>
-            </p>
+            <button onClick={calculate} className={styles.calcBtn}>
+              <Zap className={styles.zap} /> Рассчитать
+            </button>
           </div>
+
+          {remaining > 0 && remaining < 4 && (
+            <div className={styles.warning}>
+              <AlertCircle className={styles.alert} />
+              Осталось {remaining} героев — мало для новой шахты
+            </div>
+          )}
         </div>
-      )}
-    </main>
+
+        {/* Правая колонка — компактный результат */}
+        <div className={styles.rightPanel}>
+          {assignments.length > 0 && (
+            <>
+              <div className={styles.totalCard}>
+                <div className={styles.totalLabel}>Всего за цикл</div>
+                <div className={styles.totalValue}>
+                  {totalEmeralds.toLocaleString()}
+                  <Gem className={styles.totalGem} />
+                </div>
+              </div>
+
+              <div className={styles.minesList}>
+                {assignments.map(a => {
+                  const mult = a.time === 60 ? 3 : a.time === 192 ? 1 : 0;
+                  const reward = a.emeralds * mult;
+
+                  return (
+                    <div key={a.mine} className={styles.mineRow}>
+                      <div className={styles.mineInfo}>
+                        <span className={styles.mineNum}>Шахта {a.mine}</span>
+                        <span className={styles.level}>ур. {a.level}</span>
+                      </div>
+
+                      <div className={styles.mineStats}>
+                        <span className={styles.rate}>{a.rate.toFixed(1)}/ч</span>
+                        <span className={styles.reward}>
+                          {reward > 0 ? reward.toLocaleString() : a.emeralds}
+                        </span>
+                        {a.time === 60 && <span className={styles.bonus3x}>×3</span>}
+                        {a.time === 192 && <span className={styles.bonus1x}>×1</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className={styles.footer}>
+                <div>Осталось героев: <strong>{remaining}</strong></div>
+                <div>Шахт занято: <strong>{assignments.length}</strong></div>
+              </div>
+            </>
+          )}
+
+          {assignments.length === 0 && heroes >= 4 && (
+            <div className={styles.empty}>Нажмите «Рассчитать»</div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

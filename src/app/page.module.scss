@@ -1,0 +1,197 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  color: #e0e7ff;
+  font-family: 'Segoe UI', sans-serif;
+  padding: 2rem 1rem;
+}
+
+.grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 2.5rem;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.leftPanel {
+  h1.title {
+    font-size: 2.8rem;
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 2rem;
+    background: linear-gradient(90deg, #34d399, #5eead4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .gem { width: 60px; height: 60px; color: #34d399; }
+}
+
+.inputCard {
+  background: rgba(25, 28, 50, 0.7);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 1px solid rgba(100, 100, 200, 0.2);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+}
+
+.inputRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+
+  .icon { width: 24px; height: 24px; color: #818cf8; }
+
+  input {
+    padding: 1rem 1.2rem;
+    background: rgba(40, 45, 80, 0.6);
+    border: 1px solid #555588;
+    border-radius: 12px;
+    color: white;
+    font-size: 1.2rem;
+
+    &:focus {
+      outline: none;
+      border-color: #34d399;
+      box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.3);
+    }
+  }
+}
+
+.calcBtn {
+  width: 100%;
+  padding: 1.1rem;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.3s;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(52, 211, 153, 0.4);
+  }
+
+  .zap { width: 28px; height: 28px; margin-right: 0.8rem; }
+}
+
+.warning {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: rgba(251, 146, 60, 0.15);
+  border-radius: 12px;
+  color: #fed7aa;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  .alert { width: 26px; height: 26px; color: #fb923c; }
+}
+
+// Правая колонка — компактный вывод
+.rightPanel {
+  .totalCard {
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(16, 185, 129, 0.05));
+    border: 1px solid rgba(52, 211, 153, 0.4);
+    border-radius: 20px;
+    padding: 1.8rem;
+    text-align: center;
+    margin-bottom: 2rem;
+
+    .totalLabel { font-size: 1.1rem; color: #94a3b8; }
+    .totalValue {
+      font-size: 3.8rem;
+      font-weight: 900;
+      color: #34d399;
+      margin: 0.5rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .totalGem { width: 60px; height: 60px; }
+  }
+
+  .minesList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .mineRow {
+    background: rgba(40, 45, 70, 0.5);
+    border-radius: 14px;
+    padding: 1.1rem 1.4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(100,100,200,0.15);
+    transition: all 0.2s;
+
+    &:hover { background: rgba(60,65,100,0.6); }
+  }
+
+  .mineInfo {
+    .mineNum { font-weight: 700; font-size: 1.25rem; }
+    .level { color: #94a3b8; margin-left: 0.8rem; font-size: 0.95rem; }
+  }
+
+  .mineStats {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    font-weight: 600;
+
+    .rate { color: #60a5fa; }
+    .reward { font-size: 1.4rem; color: #34d399; }
+    .bonus3x {
+      background: #f97316;
+      color: white;
+      padding: 0.3rem 0.9rem;
+      border-radius: 30px;
+      font-weight: 700;
+    }
+    .bonus1x { color: #94a3b8; }
+  }
+
+  .footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(100,100,200,0.2);
+    display: flex;
+    justify-content: space-between;
+    color: #cbd5e1;
+    font-size: 1.1rem;
+  }
+
+  .empty {
+    text-align: center;
+    color: #64748b;
+    font-size: 1.3rem;
+    margin-top: 4rem;
+  }
+}
