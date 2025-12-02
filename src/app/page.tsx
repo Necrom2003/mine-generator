@@ -171,7 +171,7 @@ export default function Home() {
 
                       <div className={styles.mineStats}>
                         {/* Ставка/час не меняется от числа циклов */}
-                        <span className={styles.rate}>{a.rate.toFixed(1)}/ч</span>
+                        <span className={styles.rate}>{a.rate.toFixed(1)}/цикл</span>
                         {/* Показываем награду за один цикл */}
                         <span className={styles.reward}>
                           {reward > 0 ? reward.toLocaleString() : a.emeralds}
